@@ -2,45 +2,39 @@ import socket
 import os
 
 HEADER_SIZE = 10
+rate = 1024
 
 class Server:
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        
-    def receive_file(self):
-        # Open a socket and listen for connections
+        self.sequence_num = 0
+
+    def send_file(self, file_path):
+        # Open a socket and connect to the server
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((self.host, self.port))
             s.listen()
             conn, addr = s.accept()
+            print(f'Connection from {addr} is established')
             
-            # Receive the file name and size from the client
-            file_info = conn.recv(1024).decode()
-            file_name, file_size = file_info.split(":")
-            file_size = int(file_size)
-            print(f'{file_name}, {file_size}')
+            # Send the file name and size to the client
+            file_name = os.path.basename(file_path)
+            file_size = os.path.getsize(file_path)
+            conn.sendall(f"{file_name}:{file_size}".encode())
             
-            # Receive the file data in chunks with sequence numbers
-            received_data = ""
-            expected_sequence_num = 0
-            while len(received_data) < file_size:
-                data = conn.recv(1024).decode()
-                if not data:
-                    break
-                sequence_num = int(data[:HEADER_SIZE])
-                chunk = data[HEADER_SIZE:]
-                if sequence_num == expected_sequence_num:
-                    received_data += chunk
-                    expected_sequence_num += 1
-                else:
-                    print(f"Packet loss detected: expected {expected_sequence_num}, got {sequence_num}")
-            
-            # Save the received file data to disk
-            print('Received successfully')
+            # Send the file data in chunks with sequence numbers
+            with open(file_path, "r") as f:
+                while True:
+                    data = f.read(rate)
+                    if not data:
+                        break
+                    packet = f"{self.sequence_num:<{HEADER_SIZE}}" + data
+                    conn.sendall(packet.encode())
+                    self.sequence_num += 1
 
 host = socket.gethostname() 
 ip_address = socket.gethostbyname(host)
 
 server = Server(ip_address, 1234)
-server.receive_file()
+server.send_file(os.getcwd()+'\hello.pdf')
