@@ -1,7 +1,7 @@
 import socket
 import os
 HEADER_SIZE = 10
-rate = 14 + HEADER_SIZE
+rate = 14 + HEADER_SIZE + 6 # after encode length increase by 6
 
 class Client:
     def __init__(self, host, port):
@@ -35,6 +35,11 @@ class Client:
                 chunk = data[HEADER_SIZE:]
                 if sequence_num == expected_sequence_num:
                     print(f'Packet No.{sequence_num}:\'{chunk}\'')
+
+                    #  horizontal dividor for easy visual
+                    divider = '-' * 50
+                    print(divider)
+                    
                     received_data += chunk
                     expected_sequence_num += 1
                 else:

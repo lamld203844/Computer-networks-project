@@ -1,5 +1,6 @@
 import socket
 import os
+import base64
 
 HEADER_SIZE = 10
 rate = 14
@@ -24,11 +25,17 @@ class Server:
             conn.sendall(f"{file_name}:{file_size}".encode())
             
             # Send the file data in chunks with sequence numbers
-            with open(file_path, "r") as f:
+            with open(file_path, "rb") as f:
                 while True:
-                    data = f.read(rate)
-                    if not data:
+                    binary_data = f.read(rate)
+                    if not binary_data:
                         break
+
+                    # Encrypt in specific format using Base64
+                    encoded64_data = base64.b64encode(binary_data)
+                    # string representation of bin data (can understanding directly)
+                    data = encoded64_data.decode()
+
                     packet = f"{self.sequence_num:<{HEADER_SIZE}}" + data
                     conn.sendall(packet.encode())
                     self.sequence_num += 1
