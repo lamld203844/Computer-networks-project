@@ -2,7 +2,7 @@ import socket
 import os
 
 HEADER_SIZE = 10
-rate = 1024
+rate = 14
 
 class Server:
     def __init__(self, host, port):
@@ -11,7 +11,7 @@ class Server:
         self.sequence_num = 0
 
     def send_file(self, file_path):
-        # Open a socket and connect to the server
+        # Open a socket and listen for connections
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((self.host, self.port))
             s.listen()
