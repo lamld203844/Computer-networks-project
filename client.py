@@ -1,12 +1,17 @@
 import socket
 import os
-HEADER_SIZE = 10
+
+SEQ_SIZE = 10
+ERROR_BYTE = 1 # 1 byte for error
+HEADER_SIZE = SEQ_SIZE + ERROR_BYTE
 rate = 14 + HEADER_SIZE + 6 # after encode length increase by 6
 
 class Client:
     def __init__(self, host, port):
         self.host = host
         self.port = port
+        self.error = 0
+        self.sum = 0
         
     def receive_file(self):
         # Open a socket and connect to the server
@@ -31,22 +36,32 @@ class Client:
                     break
                 if len(data) <= HEADER_SIZE:
                     continue  # Skip packets with no data
-                sequence_num = int(data[:HEADER_SIZE])
+                sequence_num = int(data[:SEQ_SIZE])
+                error = int(data[SEQ_SIZE:HEADER_SIZE])
                 chunk = data[HEADER_SIZE:]
                 if sequence_num == expected_sequence_num:
-                    print(f'Packet No.{sequence_num}:\'{chunk}\'')
+                    # Print info
+                    print(f'Packet No.{sequence_num}:\'{chunk}\' ERROR:{error}')
 
                     #  horizontal dividor for easy visual
                     divider = '-' * 50
                     print(divider)
                     
+                    # Calculation error
+                    self.sum += 1
+                    if error == 1:
+                        self.error += 1
+
+                    # Accumulate packet for full
                     received_data += chunk
                     expected_sequence_num += 1
                 else:
                     print(f"Packet loss detected: expected {expected_sequence_num}, got {sequence_num}")
             
             # Save the received file data to disk
-            print('Completed transfering')
+            print('Completed communication')
+            print(f'error = {self.error/self.sum * 100:.2f}%')
+
 
 
 host = socket.gethostname() 

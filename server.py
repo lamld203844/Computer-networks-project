@@ -1,15 +1,27 @@
 import socket
 import os
 import base64
+import random
 
-HEADER_SIZE = 10
-rate = 14
+SEQ_SIZE = 10
+ERROR_BYTE = 1 # 1 byte for error
+HEADER_SIZE = SEQ_SIZE + ERROR_BYTE
+rate = 14 # reading file rate
 
 class Server:
     def __init__(self, host, port):
         self.host = host
         self.port = port
         self.sequence_num = 0
+
+    def generate_error(self):
+        # Generate a random number following a normal distribution
+        random_number = random.gauss(0, 1)
+
+        # Apply a threshold to convert the number to 0 or 1
+        threshold = 0.5
+        return 0 if random_number < threshold else 1
+
 
     def send_file(self, file_path):
         # Open a socket and listen for connections
@@ -36,7 +48,10 @@ class Server:
                     # string representation of bin data (can understanding directly)
                     data = encoded64_data.decode()
 
-                    packet = f"{self.sequence_num:<{HEADER_SIZE}}" + data
+                    # add error element
+                    error = self.generate_error()
+
+                    packet = f"{self.sequence_num:<{SEQ_SIZE}}"+ f"{error:<{ERROR_BYTE}}" + data
                     conn.sendall(packet.encode())
                     self.sequence_num += 1
 
