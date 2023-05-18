@@ -59,4 +59,4 @@ host = socket.gethostname()
 ip_address = socket.gethostbyname(host)
 
 server = Server(ip_address, 1234)
-server.send_file(os.getcwd()+'\hello.pdf')
+server.send_file(os.getcwd()+'\hello.txt')
